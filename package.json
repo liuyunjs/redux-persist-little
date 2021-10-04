@@ -7,7 +7,7 @@
   "module": "./es/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "rimraf ./dist; rimraf ./es; tsc; tsc --module commonjs --outDir ./dist --declaration false --sourceMap false",
+    "build": "rimraf ./dist; rimraf ./es; tsc; tsc --module commonjs --outDir ./dist",
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
