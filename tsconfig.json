@@ -16,7 +16,7 @@
     "jsx": "react",
     "declaration": true,
     "sourceMap": true,
-    "outDir": "./dist"
+    "outDir": "./es"
   },
   "include": [
     "./library"

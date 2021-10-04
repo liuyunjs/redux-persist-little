@@ -1,12 +1,13 @@
 {
   "name": "redux-persist-little",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": false,
   "main": "./dist/main.js",
-  "types": "./dist/main.d.ts",
+  "types": "./es/main.d.ts",
+  "module": "./es/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "rimraf ./dist; tsc",
+    "build": "rimraf ./dist; rimraf ./es; tsc; tsc --module commonjs --outDir ./dist --declaration false --sourceMap false",
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
