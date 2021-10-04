@@ -1,0 +1,9 @@
+.idea
+*.log
+node_modules
+index.jsx
+index.html
+.prettierrc.js
+vite.config.ts
+vite-env.d.ts
+library
