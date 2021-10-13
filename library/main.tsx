@@ -1,4 +1,4 @@
-import React from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   Reducer,
   Store,
@@ -264,8 +264,8 @@ export const PersistGate: React.FC<{
   fallback?: React.ReactElement | null;
   children?: React.ReactElement | null;
 }> = ({ persistor, children = null, fallback = null }) => {
-  const unmountedRef = React.useRef(false);
-  const [persistState, setPersistState] = React.useState(() => {
+  const unmountedRef = useRef(false);
+  const [persistState, setPersistState] = useState(() => {
     if (isPromise(persistor)) {
       persistor.then((p) => {
         if (unmountedRef.current) return;
@@ -277,7 +277,7 @@ export const PersistGate: React.FC<{
     return persistor;
   });
 
-  React.useLayoutEffect(
+  useLayoutEffect(
     () => () => {
       unmountedRef.current = true;
     },
