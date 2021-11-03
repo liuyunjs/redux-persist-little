@@ -10,6 +10,7 @@ import {
 } from 'redux';
 import { isPromise } from '@liuyunjs/utils/lib/isPromise';
 import { isFunction } from '@liuyunjs/utils/lib/isFunction';
+import { isString } from '@liuyunjs/utils/lib/isString';
 
 type StateFromReducer<T extends Reducer> = T extends Reducer<infer S, any>
   ? S
@@ -130,18 +131,16 @@ const dispatchStore = (store: Store, result: [string, any][]) => {
   store.dispatch({
     type: PERSIST_TYPE,
     payload: result.reduce((previousValue, currentValue) => {
-      previousValue[currentValue[0]] = currentValue[1];
+      if (currentValue[1] !== DEFAULT_VALUE) {
+        previousValue[currentValue[0]] = currentValue[1];
+      }
       return previousValue;
     }, {} as Record<string, any>),
   });
   return true;
 };
 
-let persisted = false;
-
 export const persistStore = (store: Store) => {
-  if (persisted) return true;
-  persisted = true;
   const keys = Object.keys(persistPool);
   // if (!keys.length) return true;
   let promises: Promise<[string, any]>[] = [];
@@ -155,24 +154,15 @@ export const persistStore = (store: Store) => {
           return [key, value];
         }),
       );
-    } else if (ret !== DEFAULT_VALUE) {
+    } else {
       result.push([key, ret]);
     }
   });
 
   if (promises.length) {
-    return new Promise<boolean>((resolve) => {
-      Promise.all(promises).then((promiseResult) => {
-        resolve(
-          dispatchStore(
-            store,
-            result.concat(
-              promiseResult.filter(([key, ret]) => ret !== DEFAULT_VALUE),
-            ),
-          ),
-        );
-      });
-    });
+    return Promise.all(promises).then((promiseResult) =>
+      dispatchStore(store, result.concat(promiseResult)),
+    );
   }
   return dispatchStore(store, result);
 };
@@ -181,7 +171,7 @@ const persistReducer = <T extends Reducer>(
   reducer: T,
   { key, expired, storage: storageInput }: PersistReducerOptions,
 ): T => {
-  let prevState: StateFromReducer<T> | typeof DEFAULT_VALUE = DEFAULT_VALUE;
+  let prevState: StateFromReducer<T>;
 
   const storage = storageAdapter(storageInput);
 
@@ -200,7 +190,10 @@ const persistReducer = <T extends Reducer>(
     }
 
     const newState = reducer(state, action);
-    if (prevState !== DEFAULT_VALUE && prevState !== newState) {
+    if (
+      (!isString(action.type) || action.type.indexOf('@@redux/') !== 0) &&
+      prevState !== newState
+    ) {
       storage.setItem(key, newState);
     }
     return (prevState = newState);

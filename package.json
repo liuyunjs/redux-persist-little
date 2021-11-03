@@ -1,6 +1,6 @@
 {
   "name": "redux-persist-little",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "private": false,
   "main": "./dist/main.js",
   "types": "./es/main.d.ts",
@@ -11,7 +11,7 @@
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
-    "@liuyunjs/utils": "^1.0.0"
+    "@liuyunjs/utils": "*"
   },
   "repository": {
     "type": "git",
