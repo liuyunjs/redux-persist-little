@@ -1,13 +1,13 @@
 {
   "name": "redux-persist-little",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "main": "./dist/main.js",
-  "types": "./es/main.d.ts",
+  "types": "./main/main.d.ts",
   "module": "./es/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "rimraf ./dist; rimraf ./es; tsc; tsc --module commonjs --outDir ./dist --declaration false",
+    "build": "rimraf ./dist; rimraf ./es; rollup -c rollup.config.js",
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
@@ -35,6 +35,7 @@
     "redux": "^4.1.0",
     "redux-logger": "^3.0.6",
     "rimraf": "^3.0.2",
+    "rollup-plugin-typescript2": "^0.32.1",
     "typescript": "^4.3.2",
     "vite": "^2.4.3"
   }

@@ -1,8 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider, useSelector, useDispatch } from 'react-redux';
-import { createStore, applyMiddleware } from 'redux';
-import { createLogger } from 'redux-logger';
+import { createStore } from 'redux';
 import localforage from 'localforage';
 import {
   PersistGate,
@@ -32,7 +31,12 @@ const count2 = (state = 0, action) => {
   }
 };
 
-DefaultStorage.set(window.localStorage);
+DefaultStorage.set(
+  localforage.createInstance({
+    name: 'redux-persist',
+    // storeName: 'redux-persist2',
+  }),
+);
 
 const store = createStore(
   persist(
@@ -44,9 +48,11 @@ const store = createStore(
       // whiteList: ['count'],
       // blackList: ['count2'],
       prefix: 'prefix',
+      expired: 10000,
     },
   ),
-  applyMiddleware(createLogger()),
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
+  // applyMiddleware(createLogger()),
 );
 
 const persistor = persistStore(store);

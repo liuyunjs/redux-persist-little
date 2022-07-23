@@ -1,4 +1,11 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  FC,
+  ReactElement,
+  ReactNode,
+} from 'react';
 import {
   Reducer,
   Store,
@@ -10,7 +17,6 @@ import {
 } from 'redux';
 import { isPromise } from '@liuyunjs/utils/lib/isPromise';
 import { isFunction } from '@liuyunjs/utils/lib/isFunction';
-import { isString } from '@liuyunjs/utils/lib/isString';
 
 type StateFromReducer<T extends Reducer> = T extends Reducer<infer S, any>
   ? S
@@ -70,13 +76,13 @@ class PersistStorage {
 
   constructor(private readonly _storage: PersistStorageInput) {}
 
-  getItem(key: string, expired?: number) {
+  getItem(key: string) {
     const result = this._storage.getItem(key);
     return maybePromise(result, (value) => {
       if (value == null) return DEFAULT_VALUE;
       try {
         const ret = JSON.parse(value);
-        if (!persistPool[key] || (expired && Date.now() - ret[1] >= expired)) {
+        if (!persistPool[key] || (ret[1] > 0 && ret[1] <= Date.now())) {
           this.removeItem(key);
           return DEFAULT_VALUE;
         }
@@ -87,9 +93,9 @@ class PersistStorage {
     });
   }
 
-  setItem(key: string, value: any) {
+  setItem(key: string, value: any, expired?: number) {
     this._startSaveQueue();
-    this._pool.set(key, value);
+    this._pool.set(key, [value, expired ? expired + Date.now() : 0]);
   }
 
   removeItem(key: string) {
@@ -101,7 +107,7 @@ class PersistStorage {
 
     setTimeout(() => {
       this._pool.forEach((value, key) => {
-        this._storage.setItem(key, JSON.stringify([value, Date.now()]));
+        this._storage.setItem(key, JSON.stringify(value));
       });
 
       this._pool.clear();
@@ -147,7 +153,7 @@ export const persistStore = (store: Store) => {
   let result: [string, any][] = [];
 
   keys.forEach((key) => {
-    const ret = persistPool[key].storage.getItem(key, persistPool[key].expired);
+    const ret = persistPool[key].storage.getItem(key);
     if (isPromise(ret)) {
       promises.push(
         ret.then((value) => {
@@ -171,32 +177,27 @@ const persistReducer = <T extends Reducer>(
   reducer: T,
   { key, expired, storage: storageInput }: PersistReducerOptions,
 ): T => {
-  let prevState: StateFromReducer<T>;
-
   const storage = storageAdapter(storageInput);
 
   persistPool[key] = { storage, expired };
+  let persisted = false;
 
   return ((
     state: StateFromReducer<T> | undefined,
     action: ActionFromReducer<T>,
   ) => {
     if (action.type === PERSIST_TYPE) {
+      persisted = true;
       if (key in action.payload) {
-        return (prevState = action.payload[key] as StateFromReducer<T>);
+        state = action.payload[key] as StateFromReducer<T>;
       }
-
-      return (prevState = state!);
     }
 
     const newState = reducer(state, action);
-    if (
-      (!isString(action.type) || action.type.indexOf('@@redux/') !== 0) &&
-      prevState !== newState
-    ) {
-      storage.setItem(key, newState);
+    if (persisted && state !== newState) {
+      storage.setItem(key, newState, expired);
     }
-    return (prevState = newState);
+    return newState;
   }) as T;
 };
 
@@ -252,10 +253,10 @@ export function persist(reducer: any, options: any) {
   return persistReducers(reducer, options);
 }
 
-export const PersistGate: React.FC<{
+export const PersistGate: FC<{
   persistor: ReturnType<typeof persistStore>;
-  fallback?: React.ReactElement | null;
-  children?: React.ReactElement | null;
+  fallback?: ReactNode | null;
+  children?: ReactNode | null;
 }> = ({ persistor, children = null, fallback = null }) => {
   const unmountedRef = useRef(false);
   const [persistState, setPersistState] = useState(() => {
@@ -277,5 +278,5 @@ export const PersistGate: React.FC<{
     [],
   );
 
-  return persistState ? children! : fallback;
+  return (persistState ? children! : fallback) as ReactElement;
 };

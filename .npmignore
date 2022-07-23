@@ -7,3 +7,4 @@ index.html
 vite.config.ts
 vite-env.d.ts
 library
+rollup.config.js
